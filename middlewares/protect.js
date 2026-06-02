@@ -4,14 +4,21 @@ const AppError = require('../utils/AppError');
 const asyncHandler = require('./asyncHandler');
 
 const protect = asyncHandler(async (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  let token;
   
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  // Спочатку пошук токену у cookies
+  if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  } 
+  // Якщо немає в cookies , пошук в заголовку
+  else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
     return next(new AppError('Доступ заборонено. Токен відсутній', 401));
   }
 
-  const token = authHeader.split(' ')[1];
-  
   let decoded;
   try {
     decoded = jwt.verify(token, process.env.JWT_SECRET);
