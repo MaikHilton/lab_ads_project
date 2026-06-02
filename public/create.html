@@ -10,6 +10,7 @@
     <input type="text" id="title" placeholder="Назва товару/послуги" required><br><br>
     <input type="number" id="price" placeholder="Ціна (грн)" required><br><br>
     <input type="text" id="category" placeholder="Категорія" required><br><br>
+    <input type="text" id="location" placeholder="Місто / Локація" required><br><br>
     <textarea id="description" placeholder="Опис оголошення" required></textarea><br><br>
     <button type="submit">Опублікувати</button>
   </form>
@@ -30,6 +31,7 @@
         title: document.getElementById('title').value,
         price: Number(document.getElementById('price').value),
         category: document.getElementById('category').value,
+        location: document.getElementById('location').value, // ПЕРЕДАЧА ЛОКАЦІЇ НА БЕКЕНД
         description: document.getElementById('description').value
       };
 
@@ -45,6 +47,7 @@
       const data = await response.json();
 
       if (!response.ok) {
+        document.getElementById('message').style.color = 'red';
         document.getElementById('message').textContent = data.message || 'Помилка створення';
         // Якщо токен прострочений - викидаємо на логін
         if (response.status === 401) {
