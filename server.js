@@ -15,6 +15,9 @@ const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
 
+// Статичні файли (для зображень та інших ресурсів)
+app.use(express.static('public'));
+
 // Логування (тільки для розробки)
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));

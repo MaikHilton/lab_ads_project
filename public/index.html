@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Дошка оголошень</title>
+</head>
+<body>
+  <h1>Усі оголошення</h1>
+  <nav>
+    <a href="/login.html">Увійти</a> |
+    <a href="/register.html">Реєстрація</a> |
+    <a href="/create.html">Додати оголошення</a>
+    <button id="logoutBtn">Вийти</button>
+  </nav>
+  
+  <hr>
+  <ul id="adsList"></ul>
+
+  <script>
+    async function loadAds() {
+      const response = await fetch('/api/ads');
+      const data = await response.json();
+      const list = document.getElementById('adsList');
+      
+      if (response.ok && data.data) {
+        list.innerHTML = data.data.map(ad =>
+          `<li>
+            <strong>${ad.title}</strong> — ${ad.price} грн<br>
+            <em>Категорія: ${ad.category || 'Не вказана'}</em><br>
+            <p>${ad.description}</p>
+          </li><hr>`
+        ).join('');
+      } else {
+        list.innerHTML = '<li>Не вдалося завантажити оголошення</li>';
+      }
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      window.location.href = '/login.html';
+    });
+
+    loadAds();
+  </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Створити оголошення</title>
+</head>
+<body>
+  <h1>Створити оголошення</h1>
+  <form id="createForm">
+    <input type="text" id="title" placeholder="Назва товару/послуги" required><br><br>
+    <input type="number" id="price" placeholder="Ціна (грн)" required><br><br>
+    <input type="text" id="category" placeholder="Категорія" required><br><br>
+    <textarea id="description" placeholder="Опис оголошення" required></textarea><br><br>
+    <button type="submit">Опублікувати</button>
+  </form>
+  <p id="message" style="color: red;"></p>
+  <p><a href="/index.html">Повернутися на головну</a></p>
+
+  <script>
+    // ПЕРЕВІРКА АВТОРИЗАЦІЇ
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login.html';
+    }
+
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const body = {
+        title: document.getElementById('title').value,
+        price: Number(document.getElementById('price').value),
+        category: document.getElementById('category').value,
+        description: document.getElementById('description').value
+      };
+
+      const response = await fetch('/api/ads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // ПЕРЕДАЧА ТОКЕНА
+        },
+        body: JSON.stringify(body)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        document.getElementById('message').textContent = data.message || 'Помилка створення';
+        // Якщо токен прострочений - викидаємо на логін
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            setTimeout(() => window.location.href = '/login.html', 1500);
+        }
+        return;
+      }
+
+      document.getElementById('message').style.color = 'green';
+      document.getElementById('message').textContent = 'Оголошення успішно додано!';
+      setTimeout(() => window.location.href = '/index.html', 1000);
+    });
+  </script>
+</body>
+</html>
