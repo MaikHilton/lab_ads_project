@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Створити оголошення</title>
+</head>
+<body>
+  <h1>Створити оголошення</h1>
+  <form id="createForm">
+    <input type="text" id="title" placeholder="Назва товару/послуги" required><br><br>
+    <input type="number" id="price" placeholder="Ціна (грн)" required><br><br>
+    <input type="text" id="category" placeholder="Категорія" required><br><br>
+    <input type="text" id="location" placeholder="Місто / Локація" required><br><br>
+    <textarea id="description" placeholder="Опис оголошення" required></textarea><br><br>
+    <button type="submit">Опублікувати</button>
+  </form>
+  <p id="message" style="color: red;"></p>
+  <p><a href="/index.html">Повернутися на головну</a></p>
+
+  <script>
+    const API_URL = 'http://localhost:3000';
+
+    // Для базової перевірки (хоча основна безпека тепер на бекенді)
+    if (!document.cookie.includes('token')) {
+      document.getElementById('message').textContent = 'Будь ласка, увійдіть, щоб створити оголошення.';
+      setTimeout(() => window.location.href = '/login.html', 1500);
+    }
+
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const body = {
+        title: document.getElementById('title').value,
+        price: Number(document.getElementById('price').value),
+        category: document.getElementById('category').value,
+        location: document.getElementById('location').value,
+        description: document.getElementById('description').value
+      };
+
+      const response = await fetch(`${API_URL}/api/ads`, {
+        method: 'POST',
+        credentials: 'include', // ОБОВ'ЯЗКОВО для роботи з cookies
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        document.getElementById('message').style.color = 'red';
+        document.getElementById('message').textContent = data.message || 'Помилка створення';
+        
+        if (response.status === 401) {
+            setTimeout(() => window.location.href = '/login.html', 1500);
+        }
+        return;
+      }
+
+      document.getElementById('message').style.color = 'green';
+      document.getElementById('message').textContent = 'Оголошення успішно додано!';
+      setTimeout(() => window.location.href = '/index.html', 1000);
+    });
+  </script>
+</body>
+</html>
