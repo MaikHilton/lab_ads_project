@@ -20,7 +20,6 @@
     const API_URL = 'http://localhost:3000';
 
     async function loadAds() {
-      // Публічний запит
       const response = await fetch(`${API_URL}/api/ads`);
       const data = await response.json();
       const list = document.getElementById('adsList');
@@ -31,6 +30,7 @@
             <strong>${ad.title}</strong> — ${ad.price} грн<br>
             <em>Категорія: ${ad.category} | Місто: ${ad.location}</em><br>
             <p>${ad.description}</p>
+            <a href="inquiry.html?adId=${ad._id}" style="color: blue; font-weight: bold;">Залишити запит</a>
           </li><hr>`
         ).join('');
       } else {

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Надіслати запит</title>
+  <style>
+    .field { margin-bottom: 16px; }
+    .field-error { color: red; font-size: 12px; display: block; margin-top: 4px; }
+    textarea { width: 100%; padding: 8px; border: 2px solid #ccc; border-radius: 4px; }
+    textarea.error { border: 2px solid red; }
+    textarea.valid { border: 2px solid green; }
+    #submitBtn { padding: 10px 20px; }
+    #submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+    #serverErrors p { color: red; background: #ffe6e6; padding: 5px; border-left: 4px solid red; }
+  </style>
+</head>
+<body>
+  <h1>Надіслати запит на оголошення</h1>
+  <div id="serverErrors"></div>
+  <form id="inquiryForm">
+    <div class="field">
+      <label for="message">Ваше повідомлення:</label>
+      <textarea id="message" rows="5" placeholder="Введіть текст запиту (мінімум 10 символів)" required></textarea>
+      <span class="field-error" id="messageError"></span>
+    </div>
+    <button type="submit" id="submitBtn" disabled>Надіслати</button>
+  </form>
+  <p><a href="index.html">Повернутися до оголошень</a></p>
+
+  <script>
+    const API_URL = 'http://localhost:3000';
+
+    // Отримуємо adId з URL: inquiry.html?adId=64a1b2c3d4...
+    const params = new URLSearchParams(window.location.search);
+    const adId = params.get('adId');
+
+    if (!adId) {
+      alert("Помилка: Не вказано оголошення!");
+      window.location.href = 'index.html';
+    }
+
+    const messageInput = document.getElementById('message');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Клієнтська валідація
+    function validateMessage() {
+      if (messageInput.value.length < 10) {
+        messageInput.classList.add('error');
+        messageInput.classList.remove('valid');
+        document.getElementById('messageError').textContent = 'Мінімум 10 символів';
+        submitBtn.disabled = true;
+        return false;
+      }
+      messageInput.classList.remove('error');
+      messageInput.classList.add('valid');
+      document.getElementById('messageError').textContent = '';
+      submitBtn.disabled = false;
+      return true;
+    }
+
+    messageInput.addEventListener('input', validateMessage);
+
+    // Відправка
+    document.getElementById('inquiryForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validateMessage()) return;
+
+      const response = await fetch(`${API_URL}/api/ads/${adId}/inquiries`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: messageInput.value })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const container = document.getElementById('serverErrors');
+        const msgs = data.errors || [data.message];
+        container.innerHTML = msgs.map(m => `<p>${m}</p>`).join('');
+        
+        // Якщо користувач не авторизований
+        if (response.status === 401) {
+          setTimeout(() => window.location.href = 'login.html', 1500);
+        }
+        return;
+      }
+
+      alert("Ваш запит успішно надіслано автору оголошення!");
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

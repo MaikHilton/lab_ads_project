@@ -3,49 +3,136 @@
 <head>
   <meta charset="UTF-8">
   <title>Реєстрація</title>
+  <style>
+    .field { margin-bottom: 16px; }
+    input { display: block; width: 100%; padding: 8px; border: 2px solid #ccc; border-radius: 4px; }
+    input.error { border: 2px solid red; }
+    input.valid { border: 2px solid green; }
+    .field-error { color: red; font-size: 12px; min-height: 16px; display: block; margin-top: 4px; }
+    #submitBtn { padding: 10px 20px; font-weight: bold; }
+    #submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+    #serverErrors p { color: red; background: #ffe6e6; padding: 5px; border-left: 4px solid red; margin-bottom: 5px; }
+  </style>
 </head>
 <body>
   <h1>Реєстрація</h1>
+  
+  <div id="serverErrors"></div>
+  
   <form id="registerForm">
-    <input type="text" id="name" placeholder="Ім'я" required><br><br>
-    <input type="email" id="email" placeholder="Email" required><br><br>
-    <input type="password" id="password" placeholder="Пароль" required><br><br>
-    <input type="password" id="confirmPassword" placeholder="Підтвердіть пароль" required><br><br>
-    <button type="submit">Зареєструватися</button>
+    <div class="field">
+      <input type="text" id="name" placeholder="Ім'я (мін. 2 символи)" required>
+      <span class="field-error" id="nameError"></span>
+    </div>
+    <div class="field">
+      <input type="email" id="email" placeholder="Email" required>
+      <span class="field-error" id="emailError"></span>
+    </div>
+    <div class="field">
+      <input type="password" id="password" placeholder="Пароль (мін. 8 символів)" required>
+      <span class="field-error" id="passwordError"></span>
+    </div>
+    <div class="field">
+      <input type="password" id="confirmPassword" placeholder="Підтвердіть пароль" required>
+      <span class="field-error" id="confirmError"></span>
+    </div>
+    <button type="submit" id="submitBtn" disabled>Зареєструватися</button>
   </form>
-  <p id="message" style="color: red;"></p>
-  <p>Вже є акаунт? <a href="/login.html">Увійти</a></p>
+  <p>Вже є акаунт? <a href="login.html">Увійти</a></p>
 
   <script>
     const API_URL = 'http://localhost:3000';
 
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirmPassword');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Допоміжні функції для стилізації
+    function setError(inputId, errorId, message) {
+      const input = document.getElementById(inputId);
+      const error = document.getElementById(errorId);
+      input.classList.add('error');
+      input.classList.remove('valid');
+      error.textContent = message;
+    }
+
+    function setValid(inputId, errorId) {
+      const input = document.getElementById(inputId);
+      const error = document.getElementById(errorId);
+      input.classList.remove('error');
+      input.classList.add('valid');
+      error.textContent = '';
+    }
+
+    // Головна функція клієнтської валідації
+    function validateAll() {
+      let isValid = true;
+
+      if (nameInput.value.length < 2) {
+        setError('name', 'nameError', 'Мінімум 2 символи');
+        isValid = false;
+      } else { setValid('name', 'nameError'); }
+
+      const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+      if (!emailRegex.test(emailInput.value)) {
+        setError('email', 'emailError', 'Некоректний формат email');
+        isValid = false;
+      } else { setValid('email', 'emailError'); }
+
+      if (passwordInput.value.length < 8) {
+        setError('password', 'passwordError', 'Мінімум 8 символів');
+        isValid = false;
+      } else { setValid('password', 'passwordError'); }
+
+      if (confirmInput.value !== passwordInput.value) {
+        setError('confirmPassword', 'confirmError', 'Паролі не збігаються');
+        isValid = false;
+      } else if (confirmInput.value) {
+        setValid('confirmPassword', 'confirmError');
+      } else {
+        setError('confirmPassword', 'confirmError', 'Обов\'язкове поле');
+        isValid = false;
+      }
+
+      submitBtn.disabled = !isValid;
+    }
+
+    // Слухаємо подію вводу на всіх полях
+    [nameInput, emailInput, passwordInput, confirmInput].forEach(input => {
+      input.addEventListener('input', validateAll);
+    });
+
+    // Відправка форми
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
-      const body = {
-        name: document.getElementById('name').value,
-        email: document.getElementById('email').value,
-        password: document.getElementById('password').value,
-        confirmPassword: document.getElementById('confirmPassword').value
-      };
+      document.getElementById('serverErrors').innerHTML = '';
 
       const response = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify({
+          name: nameInput.value,
+          email: emailInput.value,
+          password: passwordInput.value,
+          confirmPassword: confirmInput.value
+        })
       });
 
       const data = await response.json();
 
+      // Обробка серверних помилок (400 Bad Request від Joi)
       if (!response.ok) {
-        document.getElementById('message').textContent = data.message;
+        const container = document.getElementById('serverErrors');
+        const msgs = data.errors || [data.message];
+        container.innerHTML = msgs.map(m => `<p>${m}</p>`).join('');
         return;
       }
 
-      document.getElementById('message').style.color = 'green';
-      document.getElementById('message').textContent = 'Реєстрація успішна!';
-      setTimeout(() => window.location.href = '/index.html', 1000);
+      // Якщо успішно
+      window.location.href = 'index.html';
     });
   </script>
 </body>
