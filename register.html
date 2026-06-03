@@ -75,7 +75,7 @@
         isValid = false;
       } else { setValid('name', 'nameError'); }
 
-      const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(emailInput.value)) {
         setError('email', 'emailError', 'Некоректний формат email');
         isValid = false;
